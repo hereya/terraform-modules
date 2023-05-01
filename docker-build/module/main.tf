@@ -18,7 +18,7 @@ terraform {
 }
 
 locals {
-  image_name     = var.image_name != null ? var.image_name : basename(var.source_dir)
+  image_name     = var.image_name != null ? var.image_name : random_pet.generated_image_name.0.id
   s3_object_key  = "${local.image_name}/${var.image_tags[0]}/${random_pet.project_source_s3_name.id}.zip"
   repository_url = var.is_public_image ? aws_ecrpublic_repository.public.0.repository_uri : aws_ecr_repository.private.0.repository_url
   ecr_url        = dirname(local.repository_url)
@@ -44,6 +44,12 @@ locals {
     }
   )
   source_dir_hash = base64sha512(jsonencode(local.source_file_hashes))
+}
+
+resource "random_pet" "generated_image_name" {
+  count  = var.image_name != null ? 0 : 1
+  length = 2
+  prefix = basename(var.source_dir)
 }
 
 resource "aws_ecr_repository" "private" {
@@ -95,6 +101,48 @@ resource "aws_s3_object" "project_source" {
   key         = local.s3_object_key
   source      = data.archive_file.project_source.output_path
   source_hash = local.source_dir_hash
+}
+
+resource "terraform_data" "build" {
+  triggers_replace = [
+    aws_s3_object.project_source.version_id,
+  ]
+
+  provisioner "local-exec" {
+    command = templatefile("${path.module}/build.tpl", {
+      projectName = aws_codebuild_project.docker_build.name
+    })
+  }
+}
+
+
+resource "aws_codebuild_project" "docker_build" {
+  name         = "docker-build-${local.image_name}"
+  description  = "Builds the ${local.image_name} docker image"
+  service_role = aws_iam_role.docker_build.arn
+
+  artifacts {
+    type = "NO_ARTIFACTS"
+  }
+
+  environment {
+    compute_type    = "BUILD_GENERAL1_SMALL"
+    image           = "aws/codebuild/standard:7.0"
+    type            = "LINUX_CONTAINER"
+    privileged_mode = true
+  }
+
+  source {
+    type     = "S3"
+    location = "${var.source_bucket}/${local.s3_object_key}"
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      group_name  = "codebuild-${local.image_name}-build"
+      stream_name = "codebuild-${local.image_name}-log-stream"
+    }
+  }
 }
 
 data "aws_iam_policy_document" "codebuild_assume_role" {
@@ -161,48 +209,7 @@ data "aws_iam_policy_document" "docker_build" {
   }
 }
 
-resource "aws_iam_role_policy" "docker_buiild" {
+resource "aws_iam_role_policy" "docker_build" {
   role   = aws_iam_role.docker_build.name
   policy = data.aws_iam_policy_document.docker_build.json
-}
-
-resource "aws_codebuild_project" "docker_build" {
-  name         = "docker-build-${local.image_name}"
-  description  = "Builds the ${local.image_name} docker image"
-  service_role = aws_iam_role.docker_build.arn
-
-  artifacts {
-    type = "NO_ARTIFACTS"
-  }
-
-  environment {
-    compute_type    = "BUILD_GENERAL1_SMALL"
-    image           = "aws/codebuild/standard:7.0"
-    type            = "LINUX_CONTAINER"
-    privileged_mode = true
-  }
-
-  source {
-    type     = "S3"
-    location = "${var.source_bucket}/${local.s3_object_key}"
-  }
-
-  logs_config {
-    cloudwatch_logs {
-      group_name  = "codebuild-${local.image_name}-build"
-      stream_name = "codebuild-${local.image_name}-log-stream"
-    }
-  }
-}
-
-resource "terraform_data" "build" {
-  triggers_replace = [
-    aws_s3_object.project_source.version_id,
-  ]
-
-  provisioner "local-exec" {
-    command = templatefile("${path.module}/build.tpl", {
-      projectName = aws_codebuild_project.docker_build.name
-    })
-  }
 }
