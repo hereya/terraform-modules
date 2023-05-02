@@ -18,13 +18,19 @@ terraform {
 }
 
 data "external" "committed_source_files" {
-  program = ["bash", "${abspath(path.module)}/committed_source_files.sh"]
+  program     = ["bash", "${abspath(path.module)}/committed_source_files.sh"]
+  working_dir = var.source_dir
+}
+
+data "external" "last_commit" {
+  program     = ["bash", "${abspath(path.module)}/get_last_commit.sh"]
   working_dir = var.source_dir
 }
 
 locals {
   image_name     = var.image_name != null ? var.image_name : random_pet.generated_image_name.0.id
-  s3_object_key  = "${local.image_name}/${var.image_tags[0]}/${random_pet.project_source_s3_name.id}.zip"
+  image_tags     = var.image_tags != null ? var.image_tags : [data.external.last_commit.result.hash, "latest"]
+  s3_object_key  = "${local.image_name}/${local.image_tags[0]}/${random_pet.project_source_s3_name.id}.zip"
   repository_url = var.is_public_image ? aws_ecrpublic_repository.public.0.repository_uri : aws_ecr_repository.private.0.repository_url
   ecr_url        = dirname(local.repository_url)
   source_files   = {
@@ -33,7 +39,7 @@ locals {
   }
   buildspec_file = templatefile("${path.module}/buildspec.yml", {
     imageName     = local.image_name
-    imageTags     = join(" ", [for tag in var.image_tags : "\"${tag}\""])
+    imageTags     = join(" ", [for tag in local.image_tags : "\"${tag}\""])
     builder       = var.builder
     awsRegion     = var.is_public_image ? "us-east-1" : data.aws_region.current.name
     ecrUrl        = local.ecr_url

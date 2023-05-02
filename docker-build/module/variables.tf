@@ -18,7 +18,7 @@ variable "image_name" {
 variable "image_tags" {
   description = "tag of the docker image to build"
   type        = list(string)
-  default     = ["latest"]
+  default     = null
 }
 
 variable "builder" {
