@@ -29,7 +29,9 @@ data "external" "last_commit" {
 
 locals {
   image_name     = var.image_name != null ? var.image_name : random_pet.generated_image_name.0.id
-  image_tags     = var.image_tags != null ? var.image_tags : [data.external.last_commit.result.hash, "latest"]
+  image_tags     = var.image_tags != null ? var.image_tags : [
+    data.external.last_commit.result.hash, "latest"
+  ]
   s3_object_key  = "${local.image_name}/${local.image_tags[0]}/${random_pet.project_source_s3_name.id}.zip"
   repository_url = var.is_public_image ? aws_ecrpublic_repository.public.0.repository_uri : aws_ecr_repository.private.0.repository_url
   ecr_url        = dirname(local.repository_url)
@@ -63,8 +65,9 @@ resource "random_pet" "generated_image_name" {
 }
 
 resource "aws_ecr_repository" "private" {
-  count = var.is_public_image ? 0 : 1
-  name  = local.image_name
+  count        = var.is_public_image ? 0 : 1
+  name         = local.image_name
+  force_delete = var.force_delete_repository
 
   image_scanning_configuration {
     scan_on_push = true
@@ -75,6 +78,7 @@ resource "aws_ecrpublic_repository" "public" {
   count           = var.is_public_image ? 1 : 0
   provider        = aws.us-east-1
   repository_name = local.image_name
+  force_destroy   = var.force_delete_repository
 }
 
 data "aws_region" "current" {}

@@ -19,11 +19,12 @@ module "docker_build" {
   providers = {
     aws.us-east-1 = aws.us-east-1
   }
-  source_dir      = "${path.module}/my-app"
-  source_bucket   = "dream-poc-hereya-dev"
-  is_public_image = true
-  image_tags      = ["latest", "v1.0.0"]
-  image_name      = "my-awesome-app"
+  source_dir              = "${path.module}/my-app"
+  source_bucket           = "dream-poc-hereya-dev"
+  is_public_image         = true
+  image_tags              = ["latest", "v1.0.0"]
+  image_name              = "my-awesome-app"
+  force_delete_repository = true
 }
 
 output "docker_images" {

@@ -21,6 +21,7 @@ module "docker_build" {
   providers     = {
     aws.us-east-1 = aws.us-east-1
   }
+  force_delete_repository = true
 }
 
 output "docker_images" {
