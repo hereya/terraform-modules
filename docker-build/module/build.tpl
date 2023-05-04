@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 BUILD_ID=$(aws codebuild start-build --project-name ${projectName} --output text --query "build.id" --no-cli-pager)
 
 PHASE=$(aws codebuild batch-get-builds --ids $BUILD_ID --output text --query "builds[0].currentPhase" --no-cli-pager)
