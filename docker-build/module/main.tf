@@ -126,7 +126,7 @@ resource "terraform_data" "build" {
     command = templatefile("${path.module}/build.tpl", {
       projectName = aws_codebuild_project.docker_build.name
     })
-    interpreter = ["bash"]
+    interpreter = ["bash", "-c"]
   }
 }
 
