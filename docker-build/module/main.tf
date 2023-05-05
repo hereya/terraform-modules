@@ -17,28 +17,24 @@ terraform {
   }
 }
 
-data "external" "committed_source_files" {
-  program     = ["bash", "${abspath(path.module)}/committed_source_files.sh"]
-  working_dir = var.source_dir
-}
-
 data "external" "last_commit" {
   program     = ["bash", "${abspath(path.module)}/get_last_commit.sh"]
   working_dir = var.source_dir
 }
 
+data "external" "current_branch" {
+  program     = ["bash", "${abspath(path.module)}/get_current_branch.sh"]
+  working_dir = var.source_dir
+}
+
 locals {
-  image_name     = var.image_name != null ? var.image_name : random_pet.generated_image_name.0.id
-  image_tags     = var.image_tags != null ? var.image_tags : [
+  image_name = var.image_name != null ? var.image_name : random_pet.generated_image_name.0.id
+  image_tags = var.image_tags != null ? var.image_tags : [
     data.external.last_commit.result.hash, "latest"
   ]
-  s3_object_key  = "${local.image_name}/${local.image_tags[0]}/${random_pet.project_source_s3_name.id}.zip"
   repository_url = var.is_public_image ? aws_ecrpublic_repository.public.0.repository_uri : aws_ecr_repository.private.0.repository_url
   ecr_url        = dirname(local.repository_url)
-  source_files   = {
-    for file in sort(split(",", data.external.committed_source_files.result.files)) :
-    file => "${var.source_dir}/${file}"
-  }
+
   buildspec_file = templatefile("${path.module}/buildspec.yml", {
     imageName     = local.image_name
     imageTags     = join(" ", [for tag in local.image_tags : "\"${tag}\""])
@@ -47,15 +43,7 @@ locals {
     ecrUrl        = local.ecr_url
     ecrSubCommand = var.is_public_image ? "ecr-public" : "ecr"
   })
-  source_file_hashes = merge({
-    for file, full_path in local.source_files :
-    file => filebase64sha512(full_path)
-  },
-    {
-      "buildspec.yml" = base64sha512(local.buildspec_file)
-    }
-  )
-  source_dir_hash = base64sha512(jsonencode(local.source_file_hashes))
+
 }
 
 resource "random_pet" "generated_image_name" {
@@ -83,43 +71,34 @@ resource "aws_ecrpublic_repository" "public" {
 
 data "aws_region" "current" {}
 
-
-data "archive_file" "project_source" {
-  type = "zip"
-
-  dynamic "source" {
-    for_each = local.source_files
-    content {
-      filename = source.key
-      content  = file(source.value)
-    }
-  }
-
-  source {
-    filename = "buildspec.yml"
-    content  = local.buildspec_file
-  }
-
-  output_path = ".source.zip"
+resource "aws_codecommit_repository" "app" {
+  repository_name = local.image_name
+  description     = "Source code for ${local.image_name} image"
 }
 
-resource "random_pet" "project_source_s3_name" {
-  keepers = {
-    source_hash = local.source_dir_hash
-  }
-  length = 2
-}
+resource "terraform_data" "push" {
+  triggers_replace = [
+    data.external.last_commit.result.hash,
+    data.external.current_branch.result.branch,
+    var.codecommit_username,
+    var.codecommit_password_key,
+    aws_codecommit_repository.app.clone_url_http
+  ]
 
-resource "aws_s3_object" "project_source" {
-  bucket      = var.source_bucket
-  key         = local.s3_object_key
-  source      = data.archive_file.project_source.output_path
-  source_hash = local.source_dir_hash
+  provisioner "local-exec" {
+    command = templatefile("${path.module}/push.tpl", {
+      projectDir     = var.source_dir
+      repositoryUrl  = aws_codecommit_repository.app.clone_url_http
+      gitUsername    = var.codecommit_username
+      gitPasswordKey = var.codecommit_password_key
+    })
+  }
 }
 
 resource "terraform_data" "build" {
   triggers_replace = [
-    aws_s3_object.project_source.version_id,
+    data.external.last_commit.result.hash,
+    data.external.current_branch.result.branch,
   ]
 
   provisioner "local-exec" {
@@ -128,6 +107,8 @@ resource "terraform_data" "build" {
     })
     interpreter = ["bash", "-c"]
   }
+
+  depends_on = [terraform_data.push]
 }
 
 
@@ -148,8 +129,9 @@ resource "aws_codebuild_project" "docker_build" {
   }
 
   source {
-    type     = "S3"
-    location = "${var.source_bucket}/${local.s3_object_key}"
+    type     = "CODECOMMIT"
+    location = aws_codecommit_repository.app.clone_url_http
+    buildspec = local.buildspec_file
   }
 
   logs_config {
@@ -184,14 +166,18 @@ data "aws_s3_bucket" "source" {
 data "aws_iam_policy_document" "docker_build" {
   statement {
     effect = "Allow"
-
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-
     resources = ["*"]
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["codecommit:GitPull"]
+    resources = [aws_codecommit_repository.app.arn]
   }
 
   statement {

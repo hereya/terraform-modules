@@ -3,6 +3,14 @@ variable "source_dir" {
   type        = string
 }
 
+variable "codecommit_password_key" {
+  description = "The name of the key in SSM Parameter Store that contains the CodeCommit password"
+}
+
+variable "codecommit_username" {
+  description = "The username to use when authenticating to CodeCommit"
+}
+
 variable "source_bucket" {
   description = "The name of the S3 bucket where the source code will be uploaded for codebuild"
   type        = string

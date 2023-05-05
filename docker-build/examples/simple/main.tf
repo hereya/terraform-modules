@@ -22,6 +22,8 @@ module "docker_build" {
     aws.us-east-1 = aws.us-east-1
   }
   force_delete_repository = true
+  codecommit_username     = aws_iam_service_specific_credential.git_codecommit.service_user_name
+  codecommit_password_key = aws_ssm_parameter.codecommit_password.name
 }
 
 output "docker_images" {
