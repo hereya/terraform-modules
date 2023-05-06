@@ -129,10 +129,11 @@ resource "aws_codebuild_project" "docker_build" {
   }
 
   source {
-    type     = "CODECOMMIT"
-    location = aws_codecommit_repository.app.clone_url_http
+    type      = "CODECOMMIT"
+    location  = aws_codecommit_repository.app.clone_url_http
     buildspec = local.buildspec_file
   }
+  source_version = data.external.current_branch.result.branch
 
   logs_config {
     cloudwatch_logs {
@@ -163,7 +164,7 @@ resource "aws_iam_role" "docker_build" {
 
 data "aws_iam_policy_document" "docker_build" {
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
