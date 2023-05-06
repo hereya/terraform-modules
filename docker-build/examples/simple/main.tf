@@ -17,7 +17,6 @@ provider "aws" {
 module "docker_build" {
   source        = "../../module"
   source_dir    = "${path.module}/my-app"
-  source_bucket = "dream-poc-hereya-dev"
   providers     = {
     aws.us-east-1 = aws.us-east-1
   }

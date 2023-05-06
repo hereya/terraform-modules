@@ -160,9 +160,7 @@ resource "aws_iam_role" "docker_build" {
   assume_role_policy = data.aws_iam_policy_document.codebuild_assume_role.json
 }
 
-data "aws_s3_bucket" "source" {
-  bucket = var.source_bucket
-}
+
 data "aws_iam_policy_document" "docker_build" {
   statement {
     effect = "Allow"
@@ -178,15 +176,6 @@ data "aws_iam_policy_document" "docker_build" {
     effect    = "Allow"
     actions   = ["codecommit:GitPull"]
     resources = [aws_codecommit_repository.app.arn]
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["s3:*"]
-    resources = [
-      data.aws_s3_bucket.source.arn,
-      "${data.aws_s3_bucket.source.arn}/*",
-    ]
   }
 
   statement {

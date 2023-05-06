@@ -11,17 +11,11 @@ variable "codecommit_username" {
   description = "The username to use when authenticating to CodeCommit"
 }
 
-variable "source_bucket" {
-  description = "The name of the S3 bucket where the source code will be uploaded for codebuild"
-  type        = string
-}
-
 variable "image_name" {
   description = "name of the docker image to build without the namespace. Uses the project dir name by default"
   type        = string
   default     = null
 }
-
 
 variable "image_tags" {
   description = "tag of the docker image to build"
