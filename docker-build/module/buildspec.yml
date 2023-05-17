@@ -17,7 +17,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - pack build ${imageName}:latest --path . --builder ${builder}
+      - pack build ${imageName}:latest --path . --builder ${builder} --env NODE_ENV="production"
       - imageTags=(${imageTags}) && for tag in "$${imageTags[@]}";
         do
           docker tag ${imageName}:latest ${ecrUrl}/${imageName}:$tag;
