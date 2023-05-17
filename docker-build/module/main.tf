@@ -99,6 +99,7 @@ resource "terraform_data" "build" {
   triggers_replace = [
     data.external.last_commit.result.hash,
     data.external.current_branch.result.branch,
+    local.buildspec_file,
   ]
 
   provisioner "local-exec" {

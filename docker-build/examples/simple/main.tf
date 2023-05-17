@@ -14,13 +14,19 @@ provider "aws" {
   alias  = "us-east-1"
 }
 
+variable "image_tags" {
+  type    = list(string)
+  default = null
+}
+
 module "docker_build" {
-  source        = "../../module"
-  source_dir    = "${path.module}/my-app"
-  providers     = {
+  source     = "../../module"
+  source_dir = "${path.module}/my-app"
+  providers  = {
     aws.us-east-1 = aws.us-east-1
   }
   force_delete_repository = true
+  image_tags              = var.image_tags
   codecommit_username     = aws_iam_service_specific_credential.git_codecommit.service_user_name
   codecommit_password_key = aws_ssm_parameter.codecommit_password.name
 }
