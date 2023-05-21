@@ -66,7 +66,6 @@ resource "aws_ecrpublic_repository" "public" {
   count           = var.is_public_image ? 1 : 0
   provider        = aws.us-east-1
   repository_name = local.image_name
-  force_destroy   = var.force_delete_repository
 }
 
 data "aws_region" "current" {}
