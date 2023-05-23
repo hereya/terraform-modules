@@ -35,7 +35,7 @@ locals {
   repository_url = var.is_public_image ? aws_ecrpublic_repository.public.0.repository_uri : aws_ecr_repository.private.0.repository_url
   ecr_url        = dirname(local.repository_url)
 
-  buildspec_file = templatefile("${path.module}/buildspec.yml", {
+  pack_buildspec_file = templatefile("${path.module}/pack_buildspec.yml", {
     imageName     = local.image_name
     imageTags     = join(" ", [for tag in local.image_tags : "\"${tag}\""])
     builder       = var.builder
@@ -43,6 +43,16 @@ locals {
     ecrUrl        = local.ecr_url
     ecrSubCommand = var.is_public_image ? "ecr-public" : "ecr"
   })
+
+  docker_buildspec_file = templatefile("${path.module}/docker_buildspec.yml", {
+    imageName     = local.image_name
+    imageTags     = join(" ", [for tag in local.image_tags : "\"${tag}\""])
+    awsRegion     = var.is_public_image ? "us-east-1" : data.aws_region.current.name
+    ecrUrl        = local.ecr_url
+    ecrSubCommand = var.is_public_image ? "ecr-public" : "ecr"
+  })
+
+  buildspec_file = var.build_with_docker ? local.docker_buildspec_file : local.pack_buildspec_file
 
 }
 

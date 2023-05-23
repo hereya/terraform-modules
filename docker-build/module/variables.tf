@@ -40,3 +40,9 @@ variable "force_delete_repository" {
   type        = bool
   default     = false
 }
+
+variable "build_with_docker" {
+    description = "If true, the docker image will be built with docker instead of buildpacks"
+    type        = bool
+    default     = false
+}
