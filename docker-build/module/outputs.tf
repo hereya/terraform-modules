@@ -5,6 +5,10 @@ output "images" {
   ]
 }
 
+output "repository_url" {
+  value = local.repository_url
+}
+
 output "image_name" {
   value = local.image_name
 }
