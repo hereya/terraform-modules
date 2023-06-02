@@ -12,7 +12,7 @@ output "OIDC_CLIENT_SECRET" {
 }
 
 output "OIDC_ISSUER_URL" {
-  value = "https://${var.auth0_custom_domain}"
+  value = "https://${var.auth0_custom_domain}/"
 }
 
 output "OIDC_DISCOVERY_URL" {
