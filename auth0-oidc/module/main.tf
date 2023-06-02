@@ -15,8 +15,12 @@ terraform {
 data "aws_region" "current" {}
 data "auth0_tenant" "current" {}
 
+locals {
+  app_name_prefix = var.app_name_prefix != null ? var.app_name_prefix : ""
+}
+
 resource "random_pet" "client_name" {
-  prefix = var.app_name_prefix
+  prefix = local.app_name_prefix
 }
 
 resource "auth0_client" "client" {

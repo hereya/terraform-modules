@@ -6,7 +6,7 @@ variable "root_url" {
 variable "app_name_prefix" {
   type        = string
   description = "Prefix for the application name"
-  default     = ""
+  default     = null
 }
 
 variable "callback_path" {
