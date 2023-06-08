@@ -8,6 +8,12 @@ variable "route53_zone_name" {
   type        = string
 }
 
+variable "is_private_domain" {
+  description = "Whether the Route53 zone is private or not"
+  type        = bool
+  default     = false
+}
+
 variable "alb_arn" {
   description = "The ARN of the ALB to associate the certificate with"
   type        = string

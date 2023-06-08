@@ -10,7 +10,8 @@ terraform {
 
 
 data "aws_route53_zone" "domain" {
-  name = var.route53_zone_name
+  name         = var.route53_zone_name
+  private_zone = var.is_private_domain
 }
 
 locals {

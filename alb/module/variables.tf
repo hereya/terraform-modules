@@ -24,3 +24,9 @@ variable "certificate_arn" {
   description = "ARN of the certificate to be used for the ALB"
   default     = null
 }
+
+variable "is_internal" {
+  type        = bool
+  description = "Is the ALB internal (i.e not exposed to internet)?"
+  default     = false
+}
