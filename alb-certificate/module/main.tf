@@ -14,6 +14,10 @@ data "aws_route53_zone" "domain" {
   private_zone = var.is_private_domain
 }
 
+data "aws_route53_zone" "public_domain" {
+  name         = var.route53_zone_name
+}
+
 locals {
   domain_name = "${var.domain_name_prefix}.${var.route53_zone_name}"
 }
@@ -23,7 +27,7 @@ module "acm" {
   version = "~> 4.0"
 
   domain_name = local.domain_name
-  zone_id     = data.aws_route53_zone.domain.zone_id
+  zone_id     = data.aws_route53_zone.public_domain.zone_id
 
   subject_alternative_names = var.create_www_alias? [
     "www.${local.domain_name}"
