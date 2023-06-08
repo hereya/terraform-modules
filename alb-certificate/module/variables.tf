@@ -14,6 +14,12 @@ variable "is_private_domain" {
   default     = false
 }
 
+variable "public_domain_suffix" {
+  description = "The public domain suffix to use for certificate validation. Only required if is_private_domain is true, default to the root domain of the zone"
+  type        = string
+  default     = null
+}
+
 variable "alb_arn" {
   description = "The ARN of the ALB to associate the certificate with"
   type        = string

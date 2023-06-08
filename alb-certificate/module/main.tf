@@ -8,6 +8,11 @@ terraform {
   }
 }
 
+locals {
+  zone_name_parts = split(".", var.route53_zone_name )
+  zone_root = join(".", slice(local.zone_name_parts, length(local.zone_name_parts) - 2, length(local.zone_name_parts)))
+  public_zone_name = var.public_domain_suffix != null ? var.public_domain_suffix: local.zone_root
+}
 
 data "aws_route53_zone" "domain" {
   name         = var.route53_zone_name
@@ -15,7 +20,7 @@ data "aws_route53_zone" "domain" {
 }
 
 data "aws_route53_zone" "public_domain" {
-  name         = var.route53_zone_name
+  name         = local.public_zone_name
 }
 
 locals {
