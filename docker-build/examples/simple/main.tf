@@ -19,6 +19,13 @@ variable "image_tags" {
   default = null
 }
 
+variable "codecommit_username" {}
+variable "codecommit_password_key" {}
+variable "dockerhub_username" {}
+variable "dockerhub_password" {
+  sensitive = true
+}
+
 module "docker_build" {
   source     = "../../module"
   source_dir = "${path.module}/my-app"
@@ -27,8 +34,10 @@ module "docker_build" {
   }
   force_delete_repository = true
   image_tags              = var.image_tags
-  codecommit_username     = aws_iam_service_specific_credential.git_codecommit.service_user_name
-  codecommit_password_key = aws_ssm_parameter.codecommit_password.name
+  codecommit_username     = var.codecommit_username
+  codecommit_password_key = var.codecommit_password_key
+  dockerhub_username      = var.dockerhub_username
+  dockerhub_password      = var.dockerhub_password
 }
 
 output "docker_images" {

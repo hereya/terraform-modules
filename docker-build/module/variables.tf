@@ -46,3 +46,12 @@ variable "build_with_docker" {
     type        = bool
     default     = false
 }
+
+variable "dockerhub_username" {
+  description = "Dockerhub username"
+}
+
+variable "dockerhub_password" {
+  sensitive   = true
+  description = "Dockerhub password"
+}

@@ -2,6 +2,8 @@ version: 0.2
 
 env:
   shell: bash
+  parameter-store:
+    dockerhubPassword: ${dockerhubPasswordKey}
 
 phases:
   install:
@@ -13,6 +15,8 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws ${ecrSubCommand} get-login-password --region ${awsRegion} | docker login --username AWS --password-stdin ${ecrUrl}
+      - echo Logging in to DockerHub...
+      - echo $${dockerhubPassword} | docker login --username ${dockerhubUsername} --password-stdin
   build:
     commands:
       - echo Build started on `date`

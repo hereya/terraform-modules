@@ -36,12 +36,14 @@ locals {
   ecr_url        = dirname(local.repository_url)
 
   pack_buildspec_file = templatefile("${path.module}/pack_buildspec.yml", {
-    imageName     = local.image_name
-    imageTags     = join(" ", [for tag in local.image_tags : "\"${tag}\""])
-    builder       = var.builder
-    awsRegion     = var.is_public_image ? "us-east-1" : data.aws_region.current.name
-    ecrUrl        = local.ecr_url
-    ecrSubCommand = var.is_public_image ? "ecr-public" : "ecr"
+    imageName         = local.image_name
+    imageTags         = join(" ", [for tag in local.image_tags : "\"${tag}\""])
+    builder           = var.builder
+    awsRegion         = var.is_public_image ? "us-east-1" : data.aws_region.current.name
+    ecrUrl            = local.ecr_url
+    ecrSubCommand     = var.is_public_image ? "ecr-public" : "ecr"
+    dockerhubUsername = var.dockerhub_username
+    dockerhubPasswordKey = var.dockerhub_password
   })
 
   docker_buildspec_file = templatefile("${path.module}/docker_buildspec.yml", {
@@ -50,6 +52,8 @@ locals {
     awsRegion     = var.is_public_image ? "us-east-1" : data.aws_region.current.name
     ecrUrl        = local.ecr_url
     ecrSubCommand = var.is_public_image ? "ecr-public" : "ecr"
+    dockerhubUsername = var.dockerhub_username
+    dockerhubPasswordKey = var.dockerhub_password
   })
 
   buildspec_file = var.build_with_docker ? local.docker_buildspec_file : local.pack_buildspec_file
@@ -179,6 +183,7 @@ data "aws_iam_policy_document" "docker_build" {
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
+      "ssm:GetParameters",
     ]
     resources = ["*"]
   }
