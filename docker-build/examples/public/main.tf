@@ -14,6 +14,11 @@ provider "aws" {
   alias  = "us-east-1"
 }
 
+variable "codecommit_username" {}
+variable "codecommit_password_key" {}
+variable "dockerhub_username" {}
+variable "dockerhub_password" {}
+
 module "docker_build" {
   source    = "../../module"
   providers = {
@@ -24,8 +29,10 @@ module "docker_build" {
   image_tags              = ["latest", "v1.0.0"]
   image_name              = "my-awesome-app"
   force_delete_repository = true
-  codecommit_username     = aws_iam_service_specific_credential.git_codecommit.service_user_name
-  codecommit_password_key = aws_ssm_parameter.codecommit_password.name
+  codecommit_username     = var.codecommit_username
+  codecommit_password_key = var.codecommit_password_key
+  dockerhub_username      = var.dockerhub_username
+  dockerhub_password      = var.dockerhub_password
 }
 
 output "docker_images" {

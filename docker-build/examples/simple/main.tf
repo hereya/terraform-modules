@@ -22,9 +22,7 @@ variable "image_tags" {
 variable "codecommit_username" {}
 variable "codecommit_password_key" {}
 variable "dockerhub_username" {}
-variable "dockerhub_password" {
-  sensitive = true
-}
+variable "dockerhub_password" {}
 
 module "docker_build" {
   source     = "../../module"
