@@ -24,3 +24,9 @@ variable "logout_redirect_path" {
   description = "Application path to redirect to after logout"
   default     = "/auth/login"
 }
+
+variable "custom_scopes" {
+  type        = list(string)
+  description = "List of custom scopes to add to the application"
+  default     = []
+}
