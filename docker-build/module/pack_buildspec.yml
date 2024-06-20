@@ -8,9 +8,7 @@ env:
 phases:
   install:
     commands:
-      - add-apt-repository ppa:cncf-buildpacks/pack-cli
-      - apt-get update -y
-      - apt-get install -y pack-cli
+      - (curl -sSL "https://github.com/buildpacks/pack/releases/download/v0.34.2/pack-v0.34.2-linux.tgz" | sudo tar -C /usr/local/bin/ --no-same-owner -xzv pack)
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
